@@ -1,98 +1,5 @@
 # requirements: pyTelegramBotAPI
 import random
-import telebot
-from telebot import types
-
-# Свежий рабочий токен с защитой от переносов строк
-TOKEN = """8834330502:AAF2i1TcCB8rG23EPfnP5dqtoKfEvqweOaA"""
-
-bot = telebot.TeleBot(TOKEN)
-
-# Хранение данных игроков в оперативной памяти (RAM) хостинга
-players = {}
-
-COUNTRIES = {
-    "1": {"name": "Римская Империя", "bonus": "⚔️ +15% атака в PvP"},
-    "2": {"name": "Османский Султанат", "bonus": "💰 +20% налоги с крестьян"},
-    "3": {"name": "Сёгунат Токугава", "bonus": "🏭 Шахты дешевле на 20%"},
-}
-
-def init_player(uid, username, country_id):
-    c_name = COUNTRIES[country_id]["name"]
-    players[uid] = {
-        "username": username,
-        "country": c_name,
-        "gold": 250,
-        "mines": 1,
-        "army": 5,
-        "land": 10
-    }
-
-def get_random_enemy(exclude_uid):
-    all_enemies = [k for k in players.keys() if k != exclude_uid]
-    return random.choice(all_enemies) if all_enemies else None
-
-def send_main_menu(cid, uid):
-    p = players[uid]
-    # Начисление пассивного золота при каждом открытии меню
-    mult = 1.2 if p["country"] == "Османский Султанат" else 1.0
-    p["gold"] += int(p["mines"] * 5 * mult)
-    
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(
-        types.KeyboardButton("⛏️ Собрать Налоги"), 
-        types.KeyboardButton("🏢 Развитие Державы"), 
-        types.KeyboardButton("⚔️ Напасть на Игрока (PvP)"), 
-        types.KeyboardButton("🏦 Императорский Банк")
-    )
-    txt = (
-        f"🏰 *Держава:* {p['country']}\n"
-        f"👑 *Правитель:* @{p['username']}\n\n"
-        f"💰 *Казна:* {p['gold']}💰\n"
-        f"🏭 *Шахты:* {p['mines']} шт.\n"
-        f"⚔️ *Армия:* {p['army']} воинов\n"
-        f"🗺️ *Земли:* {p['land']} секторов\n\n"
-        f"Приказы для генералов: 👇"
-    )
-    bot.send_message(cid, txt, reply_markup=markup, parse_mode="Markdown")
-
-@bot.message_handler(commands=["start"])
-def start(msg):
-    uid = msg.from_user.id
-    if uid in players:
-        send_main_menu(msg.chat.id, uid)
-        return
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        types.InlineKeyboardButton("Римская Империя (⚔️)", callback_data="select_1"), 
-        types.InlineKeyboardButton("Османский Султанат (💰)", callback_data="select_2"), 
-        types.InlineKeyboardButton("Сёгунат Токугава (🏭)", callback_data="select_3")
-    )
-    bot.send_message(msg.chat.id, "🌍 *Великая Карта Мира!*\n\nВыберите фракцию для старта игры:", reply_markup=markup, parse_mode="Markdown")
-
-@bot.message_handler(content_types=["text"])
-def game_router(msg):
-    uid = msg.from_user.id
-    if uid not in players: return
-    p = players[uid]
-
-    if msg.text == "⛏️ Собрать Налоги":
-        inc = 15 if p["country"] == "Османский Султанат" else 10
-        p["gold"] += inc
-        bot.send_message(msg.chat.id, f"📢 Налоги собраны! В казну добавлено *+{inc}💰*")
-        send_main_menu(msg.chat.id, uid)
-        
-    elif msg.text == "🏢 Развитие Державы":
-        markup = types.InlineKeyboardMarkup(row_width=1)
-        m_cost = (80 if p["country"] == "Сёгунат Токугава" else 100) + (p["mines"] * 50)
-        markup.add(
-            types.InlineKeyboardButton(f"🏭 Построить шахту ({m_cost}💰)", callback_data="buy_mine"), 
-            types.InlineKeyboardButton("⚔️ Нанять 5 воинов (50💰)", callback_data="buy_army")
-        )
-        bot.send_message(msg.chat.id, "🏗️ *Строительство и Наем войск:*", reply_markup=markup, parse_mode="Markdown")
-        
-# requirements: pyTelegramBotAPI
-import random
 import time
 import telebot
 from telebot import types
@@ -102,10 +9,9 @@ bot = telebot.TeleBot(TOKEN)
 
 ADMIN_ID = 574241586
 
-# Глобальные игровые базы в памяти сервера
 players = {}
-alliances = {}  # Структура: {name: {owner_id: uid, members: [id1, id2], level: 1}}
-market_lots = {} # Структура: {lot_id: {seller_id: uid, gold_amount: 1000, stars_price: 10}}
+alliances = {}
+market_lots = {}
 
 COUNTRIES = {
     "1": {"name": "Римская Империя", "bonus": "⚔️ +15% атака в PvP"},
@@ -139,7 +45,6 @@ def send_main_menu(cid, uid):
     p = players[uid]
     now = time.time()
     
-    # Экономика фракций + бонус альянса (+5% за каждый уровень альянса)
     mult = 1.2 if p["country"] == "Османский Султанат" else 1.0
     if p.get("alliance") and p["alliance"] in alliances:
         mult += (alliances[p["alliance"]]["level"] * 0.05)
@@ -154,8 +59,8 @@ def send_main_menu(cid, uid):
         types.KeyboardButton("⚔️ Напасть на Игрока (PvP)"), 
         types.KeyboardButton("🤝 Альянсы и Кланы"),
         types.KeyboardButton("🛍️ Рынок Торговли (Stars)"),
-        types.KeyboardButton("🏆 Топ Империй"),
-        types.KeyboardButton("🛡️ Магазин Щитов"),
+        types.KeyboardButton("🏆 Top Империй"),
+        types.KeyboardButton("🛡️ - Магазин Щитов"),
         types.KeyboardButton("🏦 Императорский Банк")
     )
     
@@ -179,7 +84,6 @@ def send_main_menu(cid, uid):
     )
     bot.send_message(cid, txt, reply_markup=markup, parse_mode="Markdown")
 
-# === ОБРАБОТЧИКИ КОМАНД ===
 @bot.message_handler(commands=["start"])
 def start(msg):
     uid = msg.from_user.id
@@ -197,11 +101,10 @@ def admin_panel(msg):
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
         types.InlineKeyboardButton("📊 Статистика серверов", callback_data="adm_stats"),
-        types.InlineKeyboardButton("🎁 Раздать всем по 2000💰", callback_data="adm_gift")
+        types.InlineKeyboardButton("🎁 - Раздать всем по 2000💰", callback_data="adm_gift")
     )
     bot.send_message(msg.chat.id, "⚙ *Панель Создателя:*", reply_markup=markup, parse_mode="Markdown")
 
-# === ГЛУБОКАЯ ИГРОВАЯ МЕХАНИКА ===
 @bot.message_handler(content_types=["text"])
 def game_router(msg):
     uid = msg.from_user.id
@@ -209,7 +112,6 @@ def game_router(msg):
     p = players[uid]
 
     if msg.text == "⛏️ Собрать Налоги":
-        # Случайные исторические события (Шанс 15%)
         if random.randint(1, 100) <= 15:
             events = [
                 {"t": "🌾 *Урожайный год!* Народ ликует. Вы получаете сверхприбыль +300💰!", "g": 300},
@@ -273,7 +175,7 @@ def game_router(msg):
                 types.InlineKeyboardButton("➕ Создать новый альянс (1000💰)", callback_data="all_create"),
                 types.InlineKeyboardButton("🚪 Список всех альянсов", callback_data="all_list")
             )
-            bot.send_message(msg.chat.id, "🤝 *Военно-политические Альянсы:*\n\nОбъединяйтесь с другими игроками, чтобы увеличивать пассивный доход шахт!", reply_markup=markup, parse_mode="Markdown")
+            bot.send_message(msg.chat.id, "🤝 *Военно-политические Альянсы:*", reply_markup=markup, parse_mode="Markdown")
         else:
             al_name = p["alliance"]
             al = alliances.get(al_name, {"level": 1, "members": []})
@@ -285,16 +187,15 @@ def game_router(msg):
             bot.send_message(msg.chat.id, f"🤝 *Ваш Альянс: {al_name}*\n📊 Уровень союза: {al['level']}\n👥 Всего участников: {len(al['members'])}\n📈 Экономический бонус: +{al['level']*5}% к доходу шахт!", reply_markup=markup, parse_mode="Markdown")
 
     elif msg.text == "🛍️ Рынок Торговли (Stars)":
-        # Игроки могут продавать золото друг другу за Stars
         markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(
             types.InlineKeyboardButton("➕ Выставить лот: 2000💰 за 10 ⭐️", callback_data="mkt_sell_2000"),
             types.InlineKeyboardButton("🛒 Посмотреть активные лоты", callback_data="mkt_view")
         )
-        bot.send_message(msg.chat.id, "🛍️ *Глобальный межрыночный аукцион:*\n\nЗдесь вы можете продать излишки золота другим игрокам за реальные Telegram Stars или купить золото у них!", reply_markup=markup, parse_mode="Markdown")
+        bot.send_message(msg.chat.id, "🛍️ *Глобальный межрыночный аукцион:*", reply_markup=markup, parse_mode="Markdown")
 
     elif msg.text == "🏆 Топ Империй":
-        sorted_players = sorted(players.items(), key=lambda x: x[1]["gold"], reverse=True)[:10]
+        sorted_players = sorted(players.items(), key=lambda x: x["gold"], reverse=True)[:10]
         text = "🏆 *ГЛОБАЛЬНЫЙ ТОП-10 ПРАВИТЕЛЕЙ МИРА:*\n\n"
         for i, (p_id, p_data) in enumerate(sorted_players, 1):
             text += f"{i}. @{p_data['username']} — *{p_data['gold']}💰* ({p_data['country']})\n"
@@ -304,3 +205,16 @@ def game_router(msg):
         markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(
             types.InlineKeyboardButton("⏳ Мирный договор на 1 час — 200💰", callback_data="shield_1h"),
+            types.InlineKeyboardButton("💎 Вечный купол защиты — 50 ⭐️", callback_data="shield_stars")
+        )
+        bot.send_message(msg.chat.id, "🛡️ *Магазин Защиты:*", reply_markup=markup, parse_mode="Markdown")
+
+    elif msg.text == "🏦 Императорский Банк":
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("📦 1000 золото — 10 ⭐️", callback_data="s_1000"), 
+            types.InlineKeyboardButton("🦏 5000 золото — 40 ⭐️", callback_data="s_5000")
+        )
+        bot.send_message(msg.chat.id, "🏦 *Банк:*", reply_markup=markup, parse_mode="Markdown")
+
+@bot.callback_query_handler(func=lambda call: True)
