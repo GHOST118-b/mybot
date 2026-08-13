@@ -195,47 +195,35 @@ async def require_player(message: Message):
 # КЛАВИАТУРЫ
 # ============================================================
 
-def main_keyboard():
+def main_keyboard(user_id: int):
+    keyboard = [
+        [
+            KeyboardButton(text="📊 Государство"),
+            KeyboardButton(text="💰 Экономика"),
+        ],
+        [
+            KeyboardButton(text="💵 Собрать налоги"),
+            KeyboardButton(text="🪖 Армия"),
+        ],
+        [
+            KeyboardButton(text="⚔️ Война"),
+            KeyboardButton(text="🏗️ Строительство"),
+        ],
+        [
+            KeyboardButton(text="👥 Население"),
+            KeyboardButton(text="⚙️ Налоговая ставка"),
+        ],
+    ]
 
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="📊 Государство",
-                    callback_data="stats"
-                ),
-                InlineKeyboardButton(
-                    text="💰 Экономика",
-                    callback_data="economy"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🪖 Армия",
-                    callback_data="army"
-                ),
-                InlineKeyboardButton(
-                    text="🏗️ Строительство",
-                    callback_data="build"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="👥 Население",
-                    callback_data="population"
-                ),
-                InlineKeyboardButton(
-                    text="⚔️ Война",
-                    callback_data="war"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="💵 Собрать налоги",
-                    callback_data="tax"
-                ),
-            ]
-        ]
+    # Кнопка администратора видна ТОЛЬКО админу
+    if user_id == ADMIN_ID:
+        keyboard.append([
+            KeyboardButton(text="👑 Админ-панель")
+        ])
+
+    return ReplyKeyboardMarkup(
+        keyboard=keyboard,
+        resize_keyboard=True
     )
 
 
