@@ -1315,7 +1315,12 @@ async def admin_panel(message: Message):
         parse_mode="Markdown"
     )
 
+ @dp.message(F.text == "👑 Админ-панель")
+async def admin_panel_button(message: Message):
+    if not admin_only(message):
+        return
 
+    await admin_panel(message)
 # ============================================================
 # CALLBACKS
 # ============================================================
