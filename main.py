@@ -1285,29 +1285,23 @@ async def broadcast(message: Message):
 
 @dp.message(Command("admin"))
 async def admin_panel(message: Message):
-
     if not admin_only(message):
-
         await message.answer(
             "❌ У тебя нет прав администратора."
         )
-
         return
 
     await message.answer(
         "👑 **ПАНЕЛЬ АДМИНИСТРАТОРА**\n\n"
-
         "🚫 /ban USER_ID\n"
         "✅ /unban USER_ID\n"
         "🔇 /mute USER_ID\n"
         "🔊 /unmute USER_ID\n\n"
-
         "💰 /givemoney USER_ID AMOUNT\n"
         "🪖 /givearmy USER_ID AMOUNT\n"
         "👥 /givepopulation USER_ID AMOUNT\n"
         "🏗️ /givebuildings USER_ID AMOUNT\n"
         "📈 /setlevel USER_ID LEVEL\n\n"
-
         "👤 /player USER_ID\n"
         "👥 /players\n"
         "🗑️ /deleteplayer USER_ID\n"
@@ -1315,12 +1309,18 @@ async def admin_panel(message: Message):
         parse_mode="Markdown"
     )
 
- @dp.message(F.text == "👑 Админ-панель")
+
+@dp.message(F.text == "👑 Админ-панель")
 async def admin_panel_button(message: Message):
     if not admin_only(message):
         return
 
     await admin_panel(message)
+
+
+# ============================================================
+# CALLBACKS
+# ============================================================
 # ============================================================
 # CALLBACKS
 # ============================================================
