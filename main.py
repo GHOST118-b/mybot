@@ -28,7 +28,7 @@ BOT_TOKEN = "8834330502:AAFp8TzJ6VxpnPYJB_Ghlu14exrTwdA8lkA"
 # ADMIN_ID = 123456789
 # ============================================================
 
-ADMIN_ID = 123456789
+ADMIN_ID = 7427023109
 
 DB_NAME = "state_simulator.db"
 
